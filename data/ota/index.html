@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ESP32 OTA Admin</title>
+<link rel="stylesheet" href="/ota/style.css">
+</head>
+<body>
+
+<div id="login" class="login-box">
+  <h2>🔐 Admin Login</h2>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+  <p id="login-msg"></p>
+</div>
+
+<div id="panel" class="container hidden">
+  <h1>ESP32 OTA Panel</h1>
+  <p class="subtitle">Firmware Control & Monitoring</p>
+
+  <div class="card status">
+    <span id="badge">IDLE</span>
+    <p>Version: <b id="version">-</b></p>
+    <p>Uptime: <b id="uptime">-</b></p>
+  </div>
+
+  <div class="card">
+    <h2>📦 Manual Upload</h2>
+    <input type="file" id="file">
+    <button onclick="upload()">Upload</button>
+  </div>
+
+  <div class="card">
+    <h2>🌐 OTA from URL</h2>
+    <input id="url" placeholder="https://server/firmware.bin">
+    <button onclick="updateFromURL()">Update</button>
+  </div>
+
+  <div class="card">
+    <h2>⏳ Progress</h2>
+    <div class="progress-box">
+      <div id="progress"></div>
+    </div>
+    <span id="progress-text">0%</span>
+  </div>
+
+  <footer>ESP32 OTA • Rollback Protected</footer>
+</div>
+
+<script src="/ota/app.js"></script>
+</body>
+</html>

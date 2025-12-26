@@ -1,55 +1,104 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ESP32 OTA Firmware Update Panel">
 <title>ESP32 OTA Admin</title>
 <link rel="stylesheet" href="/ota/style.css">
 </head>
 <body>
 
+<!-- Login Screen -->
 <div id="login" class="login-box">
   <h2>🔐 Admin Login</h2>
-  <form id="login-form" onsubmit="login(); return false;">
-    <input id="user" placeholder="Username" autocomplete="username">
-    <input id="pass" type="password" placeholder="Password" autocomplete="current-password">
-    <button type="submit">Login</button>
+  <form id="login-form" onsubmit="handleLogin(event)">
+    <label for="user">Username</label>
+    <input 
+      id="user" 
+      type="text" 
+      placeholder="Username" 
+      autocomplete="username" 
+      aria-label="Username"
+      required
+    >
+    
+    <label for="pass">Password</label>
+    <input 
+      id="pass" 
+      type="password" 
+      placeholder="Password" 
+      autocomplete="current-password"
+      aria-label="Password"
+      required
+    >
+    
+    <button type="submit" id="login-btn">Login</button>
   </form>
-  <p id="login-msg"></p>
+  
+  <div id="login-msg" role="alert" aria-live="polite"></div>
+  
   <p class="version-info">Current OTA Version: <b id="ota-version">-</b></p>
 </div>
 
+<!-- Main Panel -->
 <div id="panel" class="container hidden">
   <h1>ESP32 OTA Panel</h1>
   <p class="subtitle">Firmware Control & Monitoring</p>
 
-  <p id="panel-msg" class="hidden"></p> <!-- Added for upload messages -->
-
-  <div class="card">
-    <h2>⏳ Progress</h2>
-    <div class="progress-box">
-      <div id="progress"></div>
-    </div>
-    <span id="progress-text">0%</span>
-  </div>
-
+  <!-- Status Card -->
   <div class="card status">
     <span id="badge">IDLE</span>
     <p>Version: <b id="version">-</b></p>
     <p>Uptime: <b id="uptime">-</b></p>
-    <p id="status-msg" class="hidden">✅ Update successful! Refreshing...</p>
+    <div id="status-msg" class="hidden message success">✅ Update successful! Refreshing...</div>
   </div>
 
+  <!-- Update Card with Tabs -->
   <div class="card">
-    <h2>📦 Manual Upload</h2>
-    <input type="file" id="file">
-    <button onclick="upload()">Upload</button>
-  </div>
+    <h2>🔄 Firmware Update</h2>
+    
+    <!-- Tab Buttons -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('manual')" id="tab-manual">
+        📦 Manual Upload
+      </button>
+      <button class="tab-btn" onclick="switchTab('url')" id="tab-url">
+        🌐 From URL
+      </button>
+    </div>
 
-  <div class="card">
-    <h2>🌐 OTA from URL</h2>
-    <input id="url" placeholder="https://server/firmware.bin">
-    <button onclick="updateFromURL()">Update</button>
+    <!-- Manual Upload Tab Content -->
+    <div id="content-manual" class="tab-content active">
+      <label for="file">Select Firmware File (.bin)</label>
+      <input 
+        type="file" 
+        id="file" 
+        accept=".bin"
+        aria-label="Firmware file"
+      >
+      <button onclick="handleUpload()" id="upload-btn" class="update-btn">
+        <span class="btn-text">Upload Firmware</span>
+        <span class="btn-progress hidden">0%</span>
+      </button>
+      <div id="upload-msg" role="alert" aria-live="polite"></div>
+    </div>
+
+    <!-- URL Update Tab Content -->
+    <div id="content-url" class="tab-content hidden">
+      <label for="url">Firmware URL</label>
+      <input 
+        id="url" 
+        type="url"
+        placeholder="https://server/firmware.bin"
+        aria-label="Firmware URL"
+      >
+      <button onclick="handleUpdateFromURL()" id="url-btn" class="update-btn">
+        <span class="btn-text">Update from URL</span>
+        <span class="btn-progress hidden">0%</span>
+      </button>
+      <div id="url-msg" role="alert" aria-live="polite"></div>
+    </div>
   </div>
 
   <footer>ESP32 OTA • Rollback Protected</footer>

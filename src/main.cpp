@@ -5,6 +5,8 @@
 
 AsyncWebServer server(80);
 
+#define VERSION "1.0.0"
+
 void setup()
 {
   Serial.begin(115200);
@@ -17,7 +19,7 @@ void setup()
   Serial.println("");
   Serial.print("WiFi connected IP address: ");
   Serial.println(WiFi.localIP());
-  
+
   if (!SPIFFS.begin(true))
   {
     Serial.println("An Error has occurred while mounting SPIFFS");
@@ -25,8 +27,12 @@ void setup()
   }
   Serial.println("SPIFFS mounted successfully");
 
-  ESP32WebOTA::boot();
-  ESP32WebOTA(server).begin();
+  static ESP32WebOTA ota(server);
+  ota.boot();
+  ota.begin();
+  ota.setVersion("0.0.2");
+  Serial.print("OTA version: ");
+  Serial.println(ota.getVersion());
 
   server.begin();
 }

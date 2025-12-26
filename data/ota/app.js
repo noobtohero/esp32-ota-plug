@@ -26,10 +26,29 @@ function poll(){
 
 function upload(){
   let f=document.getElementById('file').files[0];
-  if(!f)return alert('Select firmware');
+  if(!f){
+    alert('Select firmware');
+    document.getElementById('login-msg').innerText = '⚠️ Please select a firmware file.';
+    return;
+  }
   let d=new FormData(); d.append('update',f);
-  fetch('/update',{method:'POST',body:d});
-  poll();
+  fetch('/update',{method:'POST',body:d})
+    .then(response => {
+      if (response.ok) {
+        response.text().then(body => {
+          console.log('Server response:', body);
+          document.getElementById('status-msg').classList.remove('hidden');
+          setTimeout(() => location.reload(), 3000);
+        });
+        poll();
+      } else {
+        document.getElementById('login-msg').innerText = '❌ Upload failed. Please try again.';
+      }
+    })
+    .catch(err => {
+      console.error('Upload error:', err);
+      document.getElementById('login-msg').innerText = '❌ Network error during upload.';
+    });
 }
 
 function updateFromURL(){

@@ -5,6 +5,31 @@
 #include <Update.h>
 #include <SPIFFS.h>
 #include <esp_ota_ops.h>
+#include <freertos/FreeRTOS.h>
+#include <freertos/task.h>
+
+static volatile int _ota_progress = 0;
+
+static void ota_restart_task(void* pv) {
+  vTaskDelay(pdMS_TO_TICKS(1000));
+  ESP.restart();
+  vTaskDelete(NULL);
+}
+
+String ESP32WebOTA::getVersion() {
+  Preferences prefs;
+  prefs.begin("ota", false);
+  String v = prefs.getString("version", OTA_CURRENT_VERSION);
+  prefs.end();
+  return v;
+}
+
+void ESP32WebOTA::setVersion(const String& v) {
+  Preferences prefs;
+  prefs.begin("ota", false);
+  prefs.putString("version", v);
+  prefs.end();
+}
 
 void ESP32WebOTA::boot()
 {
@@ -41,6 +66,18 @@ void ESP32WebOTA::begin()
   });
 #endif
 
+  // /status: return JSON with version and uptime (seconds)
+  ESP32WebOTA* _self = this;
+  _server.on("/status", HTTP_GET, [_self](AsyncWebServerRequest* req) {
+    String ver = _self->getVersion();
+    unsigned long up = millis() / 1000;
+    String body = "{";
+    body += "\"version\":\"" + ver + "\",";
+    body += "\"uptime\":" + String(up);
+    body += "}";
+    req->send(200, "application/json", body);
+  });
+
 
 #if OTA_ENABLE_MANUAL
   _server.on("/ota", HTTP_GET, [](AsyncWebServerRequest *req)
@@ -52,16 +89,43 @@ void ESP32WebOTA::begin()
 #endif
 
 #if OTA_ENABLE_MANUAL
-  _server.on("/update", HTTP_POST, [](AsyncWebServerRequest *req)
-             {
-      req->send(200, "text/plain", "OK");
-      ESP.restart(); }, [](AsyncWebServerRequest *, String, size_t idx, uint8_t *data, size_t len, bool fin)
-             {
-
-      if (idx == 0) Update.begin(UPDATE_SIZE_UNKNOWN);
-      Update.write(data, len);
-      if (fin) Update.end(true); });
+  _server.on("/update", HTTP_POST,
+             [](AsyncWebServerRequest *req) {
+               req->send(200, "text/plain", "OK");
+               // schedule reboot after short delay so client receives response
+               xTaskCreate(ota_restart_task, "ota_reboot", 4096, NULL, 1, NULL);
+             },
+             [](AsyncWebServerRequest *req, String, size_t idx, uint8_t *data, size_t len, bool fin) {
+               if (idx == 0) {
+                 _ota_progress = 0;
+                 Update.begin(UPDATE_SIZE_UNKNOWN);
+               }
+               Update.write(data, len);
+               if (!fin) {
+                 if (_ota_progress < 99) _ota_progress += 5;
+               } else {
+                 if (Update.end(true)) {
+                   _ota_progress = 100;
+                 } else {
+                   _ota_progress = 0;
+                 }
+               }
+             });
 #endif
+
+  // ota-progress endpoint for UI polling
+  _server.on("/ota-progress", HTTP_GET, [](AsyncWebServerRequest* req) {
+    // Debug log
+    Serial.print("/ota-progress requested, progress=");
+    Serial.println(_ota_progress);
+    char buf[64];
+    int n = snprintf(buf, sizeof(buf), "{\"progress\":%d}", _ota_progress);
+    if (n < 0) {
+      req->send(500, "text/plain", "json_error");
+      return;
+    }
+    req->send(200, "application/json", buf);
+  });
 
   _server.on("/ping", HTTP_GET, [](AsyncWebServerRequest *req)
              { req->send(200, "text/plain", "pong"); });

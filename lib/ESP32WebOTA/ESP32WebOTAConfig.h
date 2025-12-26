@@ -1,6 +1,6 @@
 #pragma once
 
-#define OTA_CURRENT_VERSION   "1.2.3"
+#define OTA_CURRENT_VERSION   "0.0.1"
 
 #define OTA_AUTO_ENABLED      true
 #define OTA_AUTO_VERSION_URL  "https://server/version.txt"

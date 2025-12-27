@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="ESP32 OTA Firmware Update Panel">
-<title>ESP32 OTA Admin v3</title>
+<title>ESP32 OTA Admin UI 0.0.1</title>
 <link rel="stylesheet" href="/ota/style.css?v=3">
 </head>
 <body>
@@ -47,10 +47,20 @@
   <p class="subtitle">Firmware Control & Monitoring</p>
 
   <!-- Status Card -->
-  <div class="card status">
-    <span id="badge">IDLE</span>
-    <p>CurrentVersion: <b id="version">-</b></p>
-    <p>Uptime: <b id="uptime">-</b></p>
+  <!-- Status Card -->
+  <div class="card status-grid">
+    <div class="status-item">
+      <small>FIRMWARE</small>
+      <div id="version" class="big-text">-</div>
+    </div>
+    <div class="status-divider"></div>
+    <div class="status-item">
+      <small>UPTIME</small>
+      <div id="uptime" class="mono-text">-</div>
+    </div>
+    <div class="status-item badge-container">
+      <span id="badge">IDLE</span>
+    </div>
   </div>
 
   <!-- Update Card with Tabs -->

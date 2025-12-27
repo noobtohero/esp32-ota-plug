@@ -5,7 +5,8 @@
 
 AsyncWebServer server(80);
 
-#define VERSION "1.0.0"
+// Set current version of the firmware
+#define CURRENT_VERSION "0.0.5"
 
 void setup()
 {
@@ -30,7 +31,7 @@ void setup()
   static ESP32WebOTA ota(server);
   ota.boot();
   ota.begin();
-  ota.setVersion("0.0.5");
+  ota.setVersion(CURRENT_VERSION);
   Serial.print("OTA version: ");
   Serial.println(ota.getVersion());
 

@@ -1,19 +1,17 @@
-#include <WiFi.h>
-#include <SPIFFS.h>
-#include <ESPAsyncWebServer.h>
 #include <ESP32WebOTA.h>
+#include <ESPAsyncWebServer.h>
+#include <SPIFFS.h>
+#include <WiFi.h>
 
 AsyncWebServer server(80);
 
 // Set current version of the firmware
-#define CURRENT_VERSION "0.0.5"
+#define CURRENT_VERSION "0.1.0"
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
   WiFi.begin("Papa_wifi_2.4G", "9999900000");
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  while (WiFi.status() != WL_CONNECTED) {
     delay(200);
     Serial.print(".");
   }
@@ -21,21 +19,10 @@ void setup()
   Serial.print("WiFi connected IP address: ");
   Serial.println(WiFi.localIP());
 
-  if (!SPIFFS.begin(true))
-  {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
-  Serial.println("SPIFFS mounted successfully");
-
   static ESP32WebOTA ota(server);
-  ota.boot();
-  ota.begin();
-  ota.setVersion(CURRENT_VERSION);
+  ota.begin(CURRENT_VERSION);
   Serial.print("OTA version: ");
   Serial.println(ota.getVersion());
-
-  server.begin();
 }
 
 void loop() {}

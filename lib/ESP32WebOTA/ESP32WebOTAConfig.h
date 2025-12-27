@@ -1,7 +1,5 @@
 #pragma once
 
-#define OTA_CURRENT_VERSION "0.0.1"
-
 #define OTA_AUTO_ENABLED true
 #define OTA_AUTO_VERSION_URL "https://server/version.txt"
 #define OTA_AUTO_FW_URL "https://server/firmware.bin"

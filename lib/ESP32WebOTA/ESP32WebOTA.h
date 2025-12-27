@@ -4,11 +4,12 @@
 
 class ESP32WebOTA {
 public:
-  ESP32WebOTA(AsyncWebServer& server);
-  void begin();
-  static void boot();
+  ESP32WebOTA(AsyncWebServer &server);
+  void begin(const char *currentVersion);
   String getVersion();
-  void setVersion(const String& v);
+  void setVersion(const String &v);
+
 private:
-  AsyncWebServer& _server;
+  AsyncWebServer &_server;
+  void boot();
 };

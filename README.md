@@ -1,8 +1,8 @@
-# ESP32 OTA Plug v0.0.1 🚀
+# ESP32 OTA Plug v0.1.0 🚀
 
 A modern, secure, and beautiful Web OTA (Over-The-Air) firmware update solution for ESP32.
 
-## ✨ Features (v0.0.1)
+## ✨ Features (v0.1.0)
 
 *   **🎨 Modern UI/UX**:
     *   Sleek Dark Theme with glassmorphism elements.
@@ -18,17 +18,18 @@ A modern, secure, and beautiful Web OTA (Over-The-Air) firmware update solution 
     *   **UI Lock-out**: Prevents user interference during the update process.
     *   **Input Validation**: Checks file types (.bin) and sizes before upload.
 *   **🛠️ Developer Friendly**:
+    *   **One-Line Setup**: `ota.begin(VERSION)` handles SPIFFS and Server startup automatically.
     *   Easy integration with existing ESP32 projects.
     *   Configuration via `ESP32WebOTAConfig.h`.
 
-## 📦 Improvements in v0.0.1
+## 📦 Improvements in v0.1.0
 
-This initial release focuses on revamping the traditional OTA experience:
+This release introduces major API simplifications and stability improvements:
 
-1.  **Grid Dashboard**: Remade the status card into a uniform grid layout for better readability.
-2.  **Fixed Layouts**: Solved layout shifts when switching between "Manual Upload" and "URL Update" tabs.
-3.  **Visual Polish**: Added custom styling for file inputs, buttons, and status badges.
-4.  **Code Refactoring**: Cleaned up `app.js` and `style.css` for better maintainability.
+1.  **Simplified API**: New `ota.begin("VERSION")` handles SPIFFS mounting and Web Server startup automatically.
+2.  **Robust Versioning**: Firmware version is now mandatory in `begin()`, ensuring consistency between Source and NVR.
+3.  **Dashboard Grid**: Enhanced status dashboard layout for professional monitoring.
+4.  **Layout Stability**: Fixed layout shifts in tabbed interfaces.
 
 ## 🚀 Getting Started
 
@@ -40,16 +41,26 @@ This initial release focuses on revamping the traditional OTA experience:
 3.  **Include & Initialize**:
     ```cpp
     #include <ESP32WebOTA.h>
+    
+    AsyncWebServer server(80);
 
     void setup() {
-      // ... wifi setup ...
-      ota.begin(); 
+      Serial.begin(115200);
+      
+      // 1. Setup WiFi
+      WiFi.begin("SSID", "PASSWORD");
+      while (WiFi.status() != WL_CONNECTED) delay(500);
+
+      // 2. Initialize OTA 
+      // This automatically mounts SPIFFS, sets version, and starts the Server.
+      static ESP32WebOTA ota(server);
+      ota.begin("0.1.0"); 
     }
 
+    void loop() {
+      // No ota.handle() required!
     }
     ```
-
-    (No `ota.handle()` required in `loop()` as it runs asynchronously)
 
 ## 📸 Screenshots
 

@@ -19,7 +19,7 @@ static void ota_restart_task(void *pv) {
 String ESP32WebOTA::getVersion() {
   Preferences prefs;
   prefs.begin("ota", false);
-  String v = prefs.getString("version", OTA_CURRENT_VERSION);
+  String v = prefs.getString("version", "0.0.0");
   prefs.end();
   return v;
 }
@@ -49,7 +49,18 @@ void ESP32WebOTA::boot() {
 
 ESP32WebOTA::ESP32WebOTA(AsyncWebServer &server) : _server(server) {}
 
-void ESP32WebOTA::begin() {
+void ESP32WebOTA::begin(const char *currentVersion) {
+  // Ensure SPIFFS is mounted
+  if (!SPIFFS.begin(true)) {
+    Serial.println("OTA: SPIFFS Mount Failed");
+  }
+
+  // Run boot checks
+  this->boot();
+
+  // Set version
+  this->setVersion(String(currentVersion));
+
 #if 1
   // Serve static files under /ota from SPIFFS (index.html, app.js, style.css)
   _server.serveStatic("/ota", SPIFFS, "/ota/");
@@ -196,7 +207,9 @@ void ESP32WebOTA::begin() {
     req->send(200, "application/json", buf);
   });
 
-  _server.on("/ping", HTTP_GET, [](AsyncWebServerRequest *req) {
-    req->send(200, "text/plain", "pong");
-  });
+  req->send(200, "text/plain", "pong");
+});
+
+// Start server automatically
+_server.begin();
 }

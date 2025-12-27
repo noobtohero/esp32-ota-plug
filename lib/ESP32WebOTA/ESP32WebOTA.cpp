@@ -11,7 +11,7 @@
 static volatile int _ota_progress = 0;
 
 static void ota_restart_task(void *pv) {
-  vTaskDelay(pdMS_TO_TICKS(1000));
+  vTaskDelay(pdMS_TO_TICKS(3000));
   ESP.restart();
   vTaskDelete(NULL);
 }
@@ -86,10 +86,8 @@ void ESP32WebOTA::begin() {
   });
 
 #if OTA_ENABLE_MANUAL
+  // Serve OTA page without server-side auth (uses custom login form)
   _server.on("/ota", HTTP_GET, [](AsyncWebServerRequest *req) {
-    if (!req->authenticate(OTA_AUTH_USER, OTA_AUTH_PASS)) {
-      return req->requestAuthentication();
-    }
     req->send(SPIFFS, "/ota/index.html", "text/html");
   });
 #endif
@@ -98,25 +96,50 @@ void ESP32WebOTA::begin() {
   _server.on(
       "/update", HTTP_POST,
       [](AsyncWebServerRequest *req) {
+        if (!req->authenticate(OTA_AUTH_USER, OTA_AUTH_PASS)) {
+          return req->send(401, "text/plain", "Unauthorized");
+        }
         req->send(200, "text/plain", "OK");
         // schedule reboot after short delay so client receives response
         xTaskCreate(ota_restart_task, "ota_reboot", 4096, NULL, 1, NULL);
       },
-      [](AsyncWebServerRequest *req, String, size_t idx, uint8_t *data,
+      [](AsyncWebServerRequest *req, String filename, size_t idx, uint8_t *data,
          size_t len, bool fin) {
+        // Check auth BEFORE doing anything
+        if (!req->authenticate(OTA_AUTH_USER, OTA_AUTH_PASS)) {
+          return;
+        }
+
+        static size_t totalSize = 0;
+
         if (idx == 0) {
           _ota_progress = 0;
-          Update.begin(UPDATE_SIZE_UNKNOWN);
+          totalSize = req->contentLength();
+          Serial.printf("OTA Update Start: %s, Size: %u\n", filename.c_str(),
+                        totalSize);
+          if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
+            Update.printError(Serial);
+          }
         }
-        Update.write(data, len);
-        if (!fin) {
-          if (_ota_progress < 99)
-            _ota_progress += 5;
-        } else {
+
+        if (Update.write(data, len) != len) {
+          Update.printError(Serial);
+        }
+
+        // Calculate real progress
+        if (totalSize > 0) {
+          _ota_progress = ((idx + len) * 100) / totalSize;
+          if (_ota_progress > 99)
+            _ota_progress = 99; // Cap at 99 until complete
+        }
+
+        if (fin) {
           if (Update.end(true)) {
             _ota_progress = 100;
+            Serial.println("OTA Update Complete!");
           } else {
             _ota_progress = 0;
+            Serial.printf("OTA Update Failed: %s\n", Update.errorString());
           }
         }
       });
@@ -156,6 +179,11 @@ void ESP32WebOTA::begin() {
 
   // ota-progress endpoint for UI polling
   _server.on("/ota-progress", HTTP_GET, [](AsyncWebServerRequest *req) {
+    // Check authentication
+    if (!req->authenticate(OTA_AUTH_USER, OTA_AUTH_PASS)) {
+      return req->send(401, "application/json", "{\"error\":\"Unauthorized\"}");
+    }
+
     // Debug log
     Serial.print("/ota-progress requested, progress=");
     Serial.println(_ota_progress);

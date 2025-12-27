@@ -30,7 +30,7 @@ void setup()
   static ESP32WebOTA ota(server);
   ota.boot();
   ota.begin();
-  ota.setVersion("0.0.2");
+  ota.setVersion("0.0.5");
   Serial.print("OTA version: ");
   Serial.println(ota.getVersion());
 

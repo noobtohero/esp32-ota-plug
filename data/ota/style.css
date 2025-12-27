@@ -1,38 +1,35 @@
 :root {
-  --primary: #00e676;
-  --primary-dark: #00c853;
-  --primary-light: #69f0ae;
-  --bg-dark: #0f2027;
-  --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
-  --card-bg: #1e1e1e;
+  --primary: #00E676;
+  --primary-dark: #00C853;
+  --primary-light: #69F0AE;
+  --background: #121212;
+  --card-bg: #1E1E1E;
   --card-hover: #252525;
-  --text-light: #fff;
-  --text-muted: #bbb;
-  --text-dark: #888;
-  --error: #ff5252;
-  --success: #00e676;
-  --warning: #ffc107;
-  --info: #2196f3;
+  --text-light: #E0E0E0;
+  --text-dark: #B0B0B0;
+  --text-muted: #757575;
   --border-radius: 12px;
   --border-radius-sm: 8px;
-  --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.2);
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
+  --success: #00E676;
+  --error: #FF5252;
+  --warning: #FFC107;
+  --info: #2196F3;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
-    Ubuntu, Cantarell, sans-serif;
-  background: var(--bg-gradient);
+  font-family: var(--font-family);
+  background-color: var(--background);
   color: var(--text-light);
-  line-height: 1.6;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 100vh;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -40,59 +37,37 @@ body {
   display: none !important;
 }
 
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* Login Box */
 .login-box {
-  max-width: 380px;
-  margin: 80px auto;
-  padding: 40px 30px;
   background: var(--card-bg);
-  border-radius: var(--border-radius);
+  padding: 40px;
+  border-radius: 16px;
   box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 400px;
   text-align: center;
-  animation: fadeInUp 0.5s ease;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  animation: fadeIn 0.5s ease;
 }
 
 .login-box h2 {
   margin-bottom: 24px;
+  color: var(--primary);
+  font-weight: 700;
   font-size: 24px;
-  font-weight: 600;
-}
-
-.login-box form {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.login-box label {
-  text-align: left;
-  font-size: 14px;
-  color: var(--text-muted);
-  margin-bottom: -8px;
+  letter-spacing: -0.5px;
 }
 
 .login-box input {
   width: 100%;
   padding: 12px 16px;
+  margin: 8px 0;
   border: 2px solid transparent;
   border-radius: var(--border-radius-sm);
   background: rgba(255, 255, 255, 0.05);
   color: var(--text-light);
   font-size: 15px;
   transition: var(--transition);
-  min-height: 44px;
+  box-sizing: border-box;
 }
 
 .login-box input:focus {
@@ -182,6 +157,7 @@ body {
 
 /* Container */
 .container {
+  width: 100%; /* Force full width to prevent flexing based on content */
   max-width: 600px;
   margin: 0 auto;
   padding: 20px;
@@ -282,6 +258,7 @@ input[type="url"] {
   transition: var(--transition);
   min-height: 44px;
   margin-top: 4px;
+  box-sizing: border-box;
 }
 
 input[type="text"]:focus,
@@ -304,6 +281,7 @@ input[type="file"] {
   transition: var(--transition);
   min-height: 44px;
   margin-top: 8px;
+  box-sizing: border-box;
 }
 
 input[type="file"]:hover {
@@ -314,6 +292,22 @@ input[type="file"]:hover {
 input[type="file"]:focus {
   outline: 2px solid var(--primary);
   outline-offset: 2px;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 16px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: #000;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+input[type="file"]::file-selector-button:hover {
+  background: var(--primary-dark);
 }
 
 button {
@@ -371,7 +365,7 @@ button.loading::after {
   animation: spin 0.8s linear infinite;
 }
 
-/* Progress Bar */
+/* Progress Bar (Old - Kept for structure, hidden by new UI) */
 .progress-box {
   height: 24px;
   background: rgba(255, 255, 255, 0.05);
@@ -379,41 +373,6 @@ button.loading::after {
   overflow: hidden;
   position: relative;
   box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-#progress {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--primary), var(--primary-light));
-  border-radius: 12px;
-  transition: width 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-#progress::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.3),
-    transparent
-  );
-  animation: shimmer 2s infinite;
-}
-
-#progress-text {
-  display: block;
-  text-align: right;
-  font-size: 14px;
-  font-weight: 600;
-  margin-top: 8px;
-  color: var(--text-muted);
 }
 
 /* Footer */
@@ -439,96 +398,47 @@ footer {
 
 /* Animations */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
 }
 
 @keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
-  100% {
-    transform: translateX(100%);
-  }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }
 
 /* Responsive Design */
 @media (max-width: 640px) {
-  .login-box {
-    margin: 40px 20px;
-    padding: 30px 20px;
-  }
-
-  .container {
-    padding: 16px;
-  }
-
-  .container h1 {
-    font-size: 24px;
-  }
-
-  .card {
-    padding: 20px;
-  }
-
-  .card h2 {
-    font-size: 16px;
-  }
+  .login-box { margin: 40px 20px; padding: 30px 20px; }
+  .container { padding: 16px; }
+  .container h1 { font-size: 24px; }
+  .card { padding: 20px; }
+  .card h2 { font-size: 16px; }
 }
 
 /* High Contrast Mode Support */
 @media (prefers-contrast: high) {
-  :root {
-    --primary: #00ff88;
-    --text-muted: #ddd;
-  }
-
-  input,
-  button {
-    border: 2px solid var(--text-light);
-  }
+  :root { --primary: #00ff88; --text-muted: #ddd; }
+  input, button { border: 2px solid var(--text-light); }
 }
 
 /* Tabs */
@@ -578,77 +488,113 @@ footer {
 .tab-content {
   display: none;
   animation: fadeIn 0.3s ease;
+  min-height: 220px;
 }
 
 .tab-content.active {
   display: block;
 }
 
-/* Update Button with Progress */
+/* Update Button with Progress Animation */
 .update-btn {
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
-.update-btn .btn-text,
-.update-btn .btn-progress {
-  transition: opacity 0.3s ease;
+/* Override loading spinner for update buttons - use progress bar instead */
+.update-btn.loading {
+  color: inherit;
 }
 
-.update-btn.uploading .btn-text {
-  opacity: 0;
+.update-btn.loading::after {
+  display: none;
 }
 
-.update-btn.uploading .btn-progress {
-  opacity: 1;
+
+/* Redesigned Progress UI */
+#progress-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  min-height: 300px; /* Taller for better spacing */
+  background: radial-gradient(circle at center, rgba(0,230,118,0.05) 0%, transparent 70%), var(--card-bg);
 }
 
-.update-btn .btn-progress {
+.progress-icon-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.progress-icon {
+  font-size: 48px;
+  z-index: 2;
+  animation: bounce 2s infinite ease-in-out;
+}
+
+.ripple {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-weight: 700;
-  font-size: 16px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-/* Progress background in button */
-.update-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
+  width: 100%;
   height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, var(--primary-dark), var(--primary));
-  transition: width 0.3s ease;
-  z-index: -1;
+  border-radius: 50%;
+  background: rgba(0, 230, 118, 0.2);
+  animation: ripple 1.5s infinite linear;
+  z-index: 1;
 }
 
-.update-btn.uploading::before {
-  width: var(--progress, 0%);
+#progress-percent {
+  font-size: 48px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 8px;
+  text-shadow: 0 0 20px rgba(0, 230, 118, 0.3);
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
 }
 
-.update-btn.uploading {
-  background: rgba(0,230,118,0.2);
+#progress-status {
+  font-size: 16px;
+  color: var(--text-muted);
+  margin-bottom: 30px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.update-btn.uploading:hover {
-  transform: none;
-  box-shadow: none;
+.progress-box {
+  width: 100%;
+  max-width: 300px;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
 }
 
+#progress-bar {
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--primary), #69F0AE);
+  box-shadow: 0 0 10px var(--primary);
+  position: relative;
+}
 
+/* Animations */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
 
-/* Reduced Motion Support */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+@keyframes ripple {
+  0% { width: 60px; height: 60px; opacity: 0.8; }
+  100% { width: 120px; height: 120px; opacity: 0; }
 }

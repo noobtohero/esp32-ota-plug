@@ -71,26 +71,29 @@ class UI {
     }
   }
 
-  static updateProgress(percent, buttonId = null) {
-    // Update button progress if buttonId is provided
-    if (buttonId) {
-      const btn = document.getElementById(buttonId);
-      const progressText = btn?.querySelector(".btn-progress");
+  static updateProgress(percent) {
+    const bar = document.getElementById("progress-bar");
+    const label = document.getElementById("progress-percent");
+    const container = document.getElementById("progress-container");
 
-      if (btn && progressText) {
-        btn.style.setProperty("--progress", `${percent}%`);
-        progressText.textContent = `${percent}%`;
+    if (bar && label && container) {
+      container.classList.remove("hidden");
+      bar.style.width = `${percent}%`;
+      label.textContent = `${percent}%`;
+    }
+  }
 
-        if (percent > 0 && percent < 100) {
-          btn.classList.add("uploading");
-          progressText.classList.remove("hidden");
-        } else {
-          btn.classList.remove("uploading");
-          if (percent === 0) {
-            progressText.classList.add("hidden");
-          }
-        }
-      }
+  static setLockState(locked) {
+    if (locked) {
+      document.body.classList.add("locked");
+      // Disable all inputs and buttons
+      const inputs = document.querySelectorAll("input, button");
+      inputs.forEach((el) => (el.disabled = true));
+    } else {
+      document.body.classList.remove("locked");
+      // Enable all inputs and buttons
+      const inputs = document.querySelectorAll("input, button");
+      inputs.forEach((el) => (el.disabled = false));
     }
   }
 
@@ -237,20 +240,22 @@ async function loadOTAVersion() {
 // ==================== POLLING ====================
 let pollAttempts = 0;
 let lastProgress = 0;
-let currentButtonId = null; // Track which button is being updated
+let currentButtonId = null;
+let uploadStarted = false;
 
 async function poll() {
   if (pollAttempts >= CONFIG.MAX_POLL_ATTEMPTS) {
     UI.updateBadge("ERROR");
     UI.showMessage(
       "❌ Update timeout. Please check device status.",
-      "panel-msg",
+      "upload-msg",
       "error"
     );
     pollAttempts = 0;
     if (currentButtonId) {
-      UI.updateProgress(0, currentButtonId);
+      UI.updateProgress(0);
     }
+    UI.setLockState(false);
     return;
   }
 
@@ -259,7 +264,7 @@ async function poll() {
     const data = await response.json();
     const progress = data.progress || 0;
 
-    UI.updateProgress(progress, currentButtonId);
+    UI.updateProgress(progress);
     lastProgress = progress;
 
     if (progress < 100) {
@@ -267,45 +272,62 @@ async function poll() {
       pollAttempts++;
       setTimeout(poll, CONFIG.POLL_INTERVAL);
     } else {
-      // Progress = 100, update complete!
-      UI.updateBadge("SUCCESS");
-      document.getElementById("status-msg").classList.remove("hidden");
-
-      // ESP32 will restart, so we expect connection errors
-      // Wait a bit longer before reload to let ESP32 restart
-      setTimeout(() => location.reload(), CONFIG.RELOAD_DELAY);
+      handleUpdateSuccess();
     }
   } catch (err) {
     console.log("Poll error:", err.message);
 
-    // If we got progress = 100 before, this error is expected (ESP32 restarting)
-    if (lastProgress === 100) {
-      console.log("Update complete, ESP32 is restarting...");
-      UI.updateBadge("SUCCESS");
-      document.getElementById("status-msg").classList.remove("hidden");
-      setTimeout(() => location.reload(), CONFIG.RELOAD_DELAY);
+    if (uploadStarted && pollAttempts < 5) {
+      console.log("Upload was successful, ESP32 is restarting...");
+      handleUpdateSuccess();
       return;
     }
 
-    // Otherwise, retry polling
+    if (lastProgress >= 95) {
+      console.log("Update complete, ESP32 is restarting...");
+      handleUpdateSuccess();
+      return;
+    }
+
     pollAttempts++;
 
-    // If too many consecutive errors, might be a real problem
     if (pollAttempts > 10) {
       UI.updateBadge("ERROR");
       UI.showMessage(
-        "❌ Connection lost. Device may be restarting. Please refresh manually.",
-        "panel-msg",
+        "❌ Connection lost. Device may be restarting.",
+        "upload-msg",
         "warning"
       );
       if (currentButtonId) {
-        UI.updateProgress(0, currentButtonId);
+        UI.updateProgress(0);
       }
+      UI.setLockState(false);
       return;
     }
 
     setTimeout(poll, CONFIG.POLL_INTERVAL);
   }
+}
+
+function handleUpdateSuccess() {
+  UI.updateBadge("SUCCESS");
+  UI.updateProgress(100);
+
+  const statusText = document.getElementById("progress-status");
+  if (statusText) statusText.textContent = "✅ Update Complete! Restarting...";
+
+  const progressBar = document.getElementById("progress-bar");
+  if (progressBar) progressBar.style.backgroundColor = "var(--success)";
+
+  const msgContainer =
+    currentButtonId === "upload-btn" ? "upload-msg" : "url-msg";
+  UI.showMessage(
+    "✅ Update successful! Restarting...",
+    msgContainer,
+    "success"
+  );
+
+  setTimeout(() => location.reload(), CONFIG.RELOAD_DELAY);
 }
 
 // ==================== EVENT HANDLERS ====================
@@ -319,17 +341,13 @@ async function handleLogin(event) {
   UI.setLoading("login-btn", true);
 
   try {
-    // Create auth header and test it
     const credentials = Auth.login(username, password);
-
-    // Test authentication by fetching status
     const response = await fetchWithAuth("/status");
 
     if (!response.ok) {
       throw new Error("Authentication failed");
     }
 
-    // Success - show panel
     document.getElementById("login").classList.add("hidden");
     document.getElementById("panel").classList.remove("hidden");
 
@@ -348,49 +366,58 @@ async function handleUpload() {
 
   UI.clearMessage("upload-msg");
 
-  // Validate file
   const validation = Validator.isValidFirmware(file);
   if (!validation.valid) {
     UI.showMessage(validation.error, "upload-msg", "error");
     return;
   }
 
-  UI.setLoading("upload-btn", true);
-  UI.updateProgress(0, "upload-btn");
+  UI.setLockState(true);
   UI.updateBadge("UPDATING");
+  currentButtonId = "upload-btn";
 
-  try {
-    const formData = new FormData();
-    formData.append("update", file);
+  document.getElementById("progress-status").textContent =
+    "Uploading Firmware...";
+  UI.updateProgress(0);
 
-    const response = await fetchWithAuth("/update", {
-      method: "POST",
-      body: formData,
-    });
+  const formData = new FormData();
+  formData.append("update", file);
 
-    if (!response.ok) {
-      throw new Error("Upload failed");
+  const xhr = new XMLHttpRequest();
+
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      UI.updateProgress(percent);
     }
+  };
 
-    UI.showMessage("✅ Upload started successfully!", "upload-msg", "success");
+  xhr.onload = function () {
+    if (xhr.status === 200) {
+      handleUpdateSuccess();
+    } else {
+      UI.showMessage(
+        "❌ Upload failed: " + xhr.statusText,
+        "upload-msg",
+        "error"
+      );
+      UI.updateBadge("ERROR");
+      UI.setLockState(false);
+      document.getElementById("progress-container").classList.add("hidden");
+    }
+  };
 
-    // Start polling
-    currentButtonId = "upload-btn"; // Set current button
-    pollAttempts = 0;
-    lastProgress = 0;
-    setTimeout(poll, CONFIG.POLL_INTERVAL);
-  } catch (err) {
-    console.error("Upload error:", err);
-    UI.showMessage(
-      "❌ Upload failed. Please try again.",
-      "upload-msg",
-      "error"
-    );
-    UI.updateBadge("ERROR");
-    UI.updateProgress(0, "upload-btn");
-  } finally {
-    UI.setLoading("upload-btn", false);
+  xhr.onerror = function () {
+    handleUpdateSuccess();
+  };
+
+  xhr.open("POST", "/update");
+  const authHeader = Auth.getAuthHeader();
+  if (authHeader) {
+    xhr.setRequestHeader("Authorization", authHeader);
   }
+
+  xhr.send(formData);
 }
 
 async function handleUpdateFromURL() {
@@ -399,16 +426,19 @@ async function handleUpdateFromURL() {
 
   UI.clearMessage("url-msg");
 
-  // Validate URL
   const validation = Validator.isValidURL(url);
   if (!validation.valid) {
     UI.showMessage(validation.error, "url-msg", "error");
     return;
   }
 
-  UI.setLoading("url-btn", true);
-  UI.updateProgress(0, "url-btn");
+  UI.setLockState(true);
   UI.updateBadge("UPDATING");
+  currentButtonId = "url-btn";
+
+  document.getElementById("progress-status").textContent =
+    "Requesting Update...";
+  UI.updateProgress(0);
 
   try {
     const response = await fetchWithAuth("/update-url", {
@@ -425,26 +455,25 @@ async function handleUpdateFromURL() {
 
     UI.showMessage("✅ Update from URL started!", "url-msg", "success");
 
-    // Start polling
-    currentButtonId = "url-btn"; // Set current button
+    currentButtonId = "url-btn";
+    uploadStarted = true;
     pollAttempts = 0;
     lastProgress = 0;
     setTimeout(poll, CONFIG.POLL_INTERVAL);
   } catch (err) {
-    console.error("URL update error:", err);
+    console.error("Update error:", err);
     UI.showMessage(
-      "❌ Update from URL failed. Please check the URL and try again.",
+      "❌ Update failed. Please check the URL.",
       "url-msg",
       "error"
     );
     UI.updateBadge("ERROR");
-    UI.updateProgress(0, "url-btn");
-  } finally {
-    UI.setLoading("url-btn", false);
+    UI.setLockState(false);
+    document.getElementById("progress-container").classList.add("hidden");
+    uploadStarted = false;
   }
 }
 
-// ==================== UTILITY FUNCTIONS ====================
 function formatUptime(seconds) {
   const days = Math.floor(seconds / 86400);
   const hours = Math.floor((seconds % 86400) / 3600);
@@ -471,14 +500,9 @@ function showLoginScreen() {
   UI.clearMessage("url-msg");
 }
 
-// ==================== INITIALIZATION ====================
 document.addEventListener("DOMContentLoaded", () => {
-  // Load OTA version on login screen
   loadOTAVersion();
-
-  // Check if already authenticated
   if (Auth.isAuthenticated()) {
-    // Try to verify authentication is still valid
     fetchWithAuth("/status")
       .then((response) => {
         if (response.ok) {

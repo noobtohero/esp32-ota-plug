@@ -64,9 +64,9 @@ This release introduces major API simplifications and stability improvements:
 
 ## 📸 Screenshots
 
-![Login Screen](assets/login_screen.png)
-![Panel Screen](assets/panel_screen.png)
-![Progress Screen](assets/progress_screen.png)
+![Login Screen](assets/login_screen.jpg)
+![Panel Screen](assets/panel_screen.jpg)
+![Progress Screen](assets/progress_screen.jpg)
 
 ## 📄 License
 

@@ -64,13 +64,10 @@ This release introduces major API simplifications and stability improvements:
 
 ## 📸 Screenshots
 
-<!-- ![Login Screen](assets/login_screen.jpg)
-![Panel Screen](assets/panel_screen.jpg)
-![Progress Screen](assets/progress_screen.jpg) -->
 <p align="center">
-  <img src="assets/login_screen.jpg" width="45%" />
-  <img src="assets/panel_screen.jpg" width="45%" /> 
-  <img src="assets/progress_screen.jpg" width="45%" /> 
+  <img src="assets/login_screen.jpg" width="30%" />
+  <img src="assets/panel_screen.jpg" width="30%" /> 
+  <img src="assets/progress_screen.jpg" width="30%" /> 
 </p>
 
 ## 📄 License

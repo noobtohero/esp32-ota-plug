@@ -52,7 +52,7 @@ ESP32WebOTA::ESP32WebOTA(AsyncWebServer &server) : _server(server) {}
 void ESP32WebOTA::begin(const char *currentVersion) {
   // Ensure SPIFFS is mounted
   if (!SPIFFS.begin(true)) {
-    Serial.println("OTA: SPIFFS Mount Failed");
+    // OTA: SPIFFS Mount Failed
   }
 
   // Run boot checks
@@ -114,8 +114,8 @@ void ESP32WebOTA::begin(const char *currentVersion) {
         // schedule reboot after short delay so client receives response
         xTaskCreate(ota_restart_task, "ota_reboot", 4096, NULL, 1, NULL);
       },
-      [](AsyncWebServerRequest *req, String filename, size_t idx, uint8_t *data,
-         size_t len, bool fin) {
+      [this](AsyncWebServerRequest *req, String filename, size_t idx,
+             uint8_t *data, size_t len, bool fin) {
         // Check auth BEFORE doing anything
         if (!req->authenticate(OTA_AUTH_USER, OTA_AUTH_PASS)) {
           return;
@@ -126,15 +126,17 @@ void ESP32WebOTA::begin(const char *currentVersion) {
         if (idx == 0) {
           _ota_progress = 0;
           totalSize = req->contentLength();
-          Serial.printf("OTA Update Start: %s, Size: %u\n", filename.c_str(),
-                        totalSize);
+          if (_cbStart)
+            _cbStart();
+          // OTA Update Start
           if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
-            Update.printError(Serial);
+            if (_cbError)
+              _cbError("Update begin failed");
           }
         }
 
         if (Update.write(data, len) != len) {
-          Update.printError(Serial);
+          // Write Error
         }
 
         // Calculate real progress
@@ -142,15 +144,19 @@ void ESP32WebOTA::begin(const char *currentVersion) {
           _ota_progress = ((idx + len) * 100) / totalSize;
           if (_ota_progress > 99)
             _ota_progress = 99; // Cap at 99 until complete
+          if (_cbProgress)
+            _cbProgress(_ota_progress);
         }
 
         if (fin) {
           if (Update.end(true)) {
             _ota_progress = 100;
-            Serial.println("OTA Update Complete!");
+            if (_cbEnd)
+              _cbEnd();
           } else {
             _ota_progress = 0;
-            Serial.printf("OTA Update Failed: %s\n", Update.errorString());
+            if (_cbError)
+              _cbError(Update.errorString());
           }
         }
       });
@@ -179,8 +185,6 @@ void ESP32WebOTA::begin(const char *currentVersion) {
     // Note: Actual URL-based OTA implementation would require HTTPClient
     // For now, we'll just acknowledge the request
     // You would need to implement the actual download and update logic
-    Serial.print("OTA from URL requested: ");
-    Serial.println(url);
 
     req->send(501, "application/json",
               "{\"error\":\"URL-based OTA not implemented yet. Please use "
@@ -196,8 +200,7 @@ void ESP32WebOTA::begin(const char *currentVersion) {
     }
 
     // Debug log
-    Serial.print("/ota-progress requested, progress=");
-    Serial.println(_ota_progress);
+    // (Disabled for FreeRTOS compatibility)
     char buf[64];
     int n = snprintf(buf, sizeof(buf), "{\"progress\":%d}", _ota_progress);
     if (n < 0) {
@@ -207,9 +210,15 @@ void ESP32WebOTA::begin(const char *currentVersion) {
     req->send(200, "application/json", buf);
   });
 
-  req->send(200, "text/plain", "pong");
-});
+  _server.on("/ping", HTTP_GET, [](AsyncWebServerRequest *req) {
+    req->send(200, "text/plain", "pong");
+  });
 
-// Start server automatically
-_server.begin();
+  // Start server automatically
+  _server.begin();
 }
+
+void ESP32WebOTA::onStart(std::function<void()> fn) { _cbStart = fn; }
+void ESP32WebOTA::onEnd(std::function<void()> fn) { _cbEnd = fn; }
+void ESP32WebOTA::onProgress(std::function<void(int)> fn) { _cbProgress = fn; }
+void ESP32WebOTA::onError(std::function<void(String)> fn) { _cbError = fn; }

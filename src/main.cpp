@@ -1,28 +1,53 @@
+#include "StatusLED.h"
 #include <ESP32WebOTA.h>
+#include <ESP32WebWiFi.h>
 #include <ESPAsyncWebServer.h>
-#include <SPIFFS.h>
-#include <WiFi.h>
+
 
 AsyncWebServer server(80);
+DNSServer dns;
+StatusLED led(2); // Builtin LED
 
-// Set current version of the firmware
-#define CURRENT_VERSION "0.1.0"
+ESP32WebWiFi wifi(server, dns);
+ESP32WebOTA ota(server);
 
 void setup() {
   Serial.begin(115200);
-  WiFi.begin("Papa_wifi_2.4G", "9999900000");
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(200);
-    Serial.print(".");
-  }
-  Serial.println("");
-  Serial.print("WiFi connected IP address: ");
-  Serial.println(WiFi.localIP());
+  led.begin();
+  led.setPattern(LED_BLINK_SLOW); // Default: Connecting
 
-  static ESP32WebOTA ota(server);
-  ota.begin(CURRENT_VERSION);
-  Serial.print("OTA version: ");
-  Serial.println(ota.getVersion());
+  // Configuration & Callbacks
+  wifi.setHostname("esp32-ota-plug");
+  wifi.onConnect([]() {
+    Serial.println("WiFi Connected!");
+    led.setPattern(LED_ON);
+  });
+  wifi.onAPMode([]() {
+    Serial.println("WiFi Config Portal Active");
+    led.setPattern(LED_BLINK_FAST);
+  });
+
+  ota.onStart([]() {
+    Serial.println("OTA Started");
+    led.setPattern(LED_BLINK_OTA);
+  });
+  ota.onEnd([]() {
+    Serial.println("OTA Finished");
+    led.setPattern(LED_ON); // Back to normal
+  });
+  ota.onError([](String e) {
+    Serial.println(e);
+    led.setPattern(LED_BLINK_FAST); // Error indication
+  });
+
+  // Initialize
+  wifi.begin();
+  ota.begin("0.2.0");
+
+  Serial.println("System Ready");
 }
 
-void loop() {}
+void loop() {
+  wifi.loop();
+  led.loop();
+}

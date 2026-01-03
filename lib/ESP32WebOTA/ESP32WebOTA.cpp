@@ -98,7 +98,8 @@ void ESP32WebOTA::begin(const char *currentVersion) {
 
 #if OTA_ENABLE_MANUAL
   // Serve OTA page without server-side auth (uses custom login form)
-  _server.on("/ota", HTTP_GET, [](AsyncWebServerRequest *req) {
+  // Serve OTA page without server-side auth (uses custom login form)
+  _server.on("/", HTTP_GET, [](AsyncWebServerRequest *req) {
     req->send(SPIFFS, "/ota/index.html", "text/html");
   });
 #endif

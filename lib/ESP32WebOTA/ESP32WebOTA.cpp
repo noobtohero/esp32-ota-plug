@@ -63,7 +63,7 @@ void ESP32WebOTA::begin(const char *currentVersion) {
 
 #if 1
   // Serve static files under /ota from SPIFFS (index.html, app.js, style.css)
-  _server.serveStatic("/ota", SPIFFS, "/ota/");
+  _server.serveStatic("/panel", SPIFFS, "/panel/");
 
   // Avoid 500 on missing favicon requests
   _server.on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *req) {
@@ -100,7 +100,7 @@ void ESP32WebOTA::begin(const char *currentVersion) {
   // Serve OTA page without server-side auth (uses custom login form)
   // Serve OTA page without server-side auth (uses custom login form)
   _server.on("/", HTTP_GET, [](AsyncWebServerRequest *req) {
-    req->send(SPIFFS, "/ota/index.html", "text/html");
+    req->send(SPIFFS, "/panel/index.html", "text/html");
   });
 #endif
 

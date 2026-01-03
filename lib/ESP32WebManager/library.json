@@ -1,0 +1,36 @@
+{
+  "name": "ESP32WebManager",
+  "version": "1.0.0",
+  "description": "All-in-one WiFi Manager + OTA Update library for ESP32 with Captive Portal, Async Web Server, and mDNS support",
+  "keywords": [
+    "esp32",
+    "wifi",
+    "ota",
+    "captive-portal",
+    "async",
+    "webserver",
+    "mdns",
+    "wifi-manager"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noobtohero/esp32-ota-plug"
+  },
+  "authors": [
+    {
+      "name": "NoobToHero",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "dependencies": [
+    {
+      "name": "me-no-dev/AsyncTCP"
+    },
+    {
+      "name": "me-no-dev/ESPAsyncWebServer"
+    }
+  ]
+}

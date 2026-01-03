@@ -1,14 +1,18 @@
 #pragma once
+#include "../ESP32WebManagerConfig.h"
 #include <Arduino.h>
 #include <ESPAsyncWebServer.h>
+#include <SPIFFS.h>
+#include <Update.h>
 #include <functional>
 
-class ESP32WebOTA {
+
+class OTAModule {
 public:
-  ESP32WebOTA(AsyncWebServer &server);
-  void begin(const char *currentVersion);
+  OTAModule(AsyncWebServer &server);
+
+  void begin(const char *version);
   String getVersion();
-  void setVersion(const String &v);
 
   // Callbacks
   void onStart(std::function<void()> fn);
@@ -16,12 +20,22 @@ public:
   void onProgress(std::function<void(int)> fn);
   void onError(std::function<void(String)> fn);
 
+  // Auth
+  void setAuth(const char *user, const char *pass);
+
 private:
   AsyncWebServer &_server;
-  void boot();
+  String _version;
+  String _authUser = WEBMGR_OTA_USER;
+  String _authPass = WEBMGR_OTA_PASS;
+
+  int _otaProgress = 0;
 
   std::function<void()> _cbStart = nullptr;
   std::function<void()> _cbEnd = nullptr;
   std::function<void(int)> _cbProgress = nullptr;
   std::function<void(String)> _cbError = nullptr;
+
+  void setupRoutes();
+  bool checkAuth(AsyncWebServerRequest *req);
 };

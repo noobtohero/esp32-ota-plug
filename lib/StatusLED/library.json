@@ -1,0 +1,31 @@
+{
+  "name": "StatusLED",
+  "version": "1.0.0",
+  "description": "Simple LED Status Indicator for ESP32 with auto-blink via FreeRTOS background task. Supports multiple blink patterns for status indication.",
+  "keywords": [
+    "led",
+    "status",
+    "blink",
+    "indicator",
+    "esp32",
+    "freertos",
+    "arduino"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/noobtohero/StatusLED"
+  },
+  "authors": [
+    {
+      "name": "NoobToHero",
+      "maintainer": true
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/noobtohero/StatusLED",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "export": {
+    "include": ["StatusLED.h", "StatusLED.cpp", "README.md"]
+  }
+}

@@ -1,53 +1,63 @@
 #include "StatusLED.h"
-#include <ESP32WebOTA.h>
-#include <ESP32WebWiFi.h>
-#include <ESPAsyncWebServer.h>
-
+#include <ESP32WebManager.h>
 
 AsyncWebServer server(80);
 DNSServer dns;
-StatusLED led(2); // Builtin LED
+StatusLED led(2);
 
-ESP32WebWiFi wifi(server, dns);
-ESP32WebOTA ota(server);
+ESP32WebManager manager(server, dns);
 
 void setup() {
   Serial.begin(115200);
   led.begin();
-  led.setPattern(LED_BLINK_SLOW); // Default: Connecting
+  led.setPattern(LED_BLINK_FAST); // Connecting to WiFi
 
-  // Configuration & Callbacks
-  wifi.setHostname("esp32-ota-plug");
-  wifi.onConnect([]() {
-    Serial.println("WiFi Connected!");
+  // Configuration
+  manager.setHostname("esp32");
+  manager.setOTAAuth("admin", "admin");
+
+  // WiFi Callbacks
+  manager.onWiFiConnect([]() {
+    Serial.print("WiFi Connected: ");
+    Serial.println(manager.getIP());
+    led.setPattern(LED_BLINK_SLOW); // Connected = slow blink
+  });
+
+  manager.onAPMode([]() {
+    Serial.println("AP Mode Active - Connect to ESP32-Config");
+    Serial.print("AP IP: ");
+    Serial.println(manager.getIP());
+    led.setPattern(LED_ON); // AP Mode = solid on
+  });
+
+  // OTA Callbacks
+  manager.onOTAStart([]() {
+    Serial.println("OTA Update Starting...");
+    led.setPattern(LED_BLINK_VERY_FAST); // OTA = very fast blink
+  });
+
+  manager.onOTAEnd([]() {
+    Serial.println("OTA Update Complete!");
     led.setPattern(LED_ON);
   });
-  wifi.onAPMode([]() {
-    Serial.println("WiFi Config Portal Active");
+
+  manager.onOTAProgress(
+      [](int percent) { Serial.printf("OTA Progress: %d%%\n", percent); });
+
+  manager.onOTAError([](String error) {
+    Serial.println("OTA Error: " + error);
     led.setPattern(LED_BLINK_FAST);
   });
 
-  ota.onStart([]() {
-    Serial.println("OTA Started");
-    led.setPattern(LED_BLINK_OTA);
-  });
-  ota.onEnd([]() {
-    Serial.println("OTA Finished");
-    led.setPattern(LED_ON); // Back to normal
-  });
-  ota.onError([](String e) {
-    Serial.println(e);
-    led.setPattern(LED_BLINK_FAST); // Error indication
-  });
+  // Start everything
+  manager.begin("1.0.0");
 
-  // Initialize
-  wifi.begin();
-  ota.begin("0.2.0");
-
-  Serial.println("System Ready");
+  Serial.println("System Ready!");
+  Serial.print("Version: ");
+  Serial.println(manager.getVersion());
 }
 
 void loop() {
-  wifi.loop();
-  led.loop();
+  // ไม่ต้องเรียก manager.loop() หรือ led.loop() แล้ว
+  // ทำงานอัตโนมัติผ่าน FreeRTOS Task
 }
